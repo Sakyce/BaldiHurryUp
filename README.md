@@ -2,7 +2,8 @@
 
 ## Mod install instruction
 You'll need [BepInEx](https://github.com/BepInEx/BepInEx/releases/tag/v5.4.21) and [Baldi's Basics Plus Dev API 2.0](https://gamebanana.com/dl/1002345)
-Put the dlls in BepInEx's plugins folder.
+
+Put the dlls in BepInEx's plugins folder and add the assets (folder named `sakyce.baldiplus.hurryup`) in `StreamingAssets/Modded` directory of BB+.
 
 ## Dependencies
 1. Create a lib folder in root.

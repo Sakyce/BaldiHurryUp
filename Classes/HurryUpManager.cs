@@ -1,132 +1,132 @@
-﻿using System;
+﻿using HarmonyLib;
 using System.Collections;
-using HarmonyLib;
 using UnityEngine;
 
 namespace Mod.Classes
 {
-    public class HurryUpManager : MonoBehaviour
-    {
-        private bool active;
-        private bool lap2active;
+	public class HurryUpManager : MonoBehaviour
+	{
+		private bool active;
+		private bool lap2active;
 
-        private float remainingTime;
-        private EnvironmentController ec;
+		private float remainingTime;
+		private EnvironmentController ec;
 
-        public void Initialize(EnvironmentController _ec)
-        {
-            ec = _ec;
-            if (active) { Stop(); }
-        }
+		public void Initialize(EnvironmentController _ec)
+		{
+			ec = _ec;
+			if (active) { Stop(); }
+		}
 
-        public void Begin()
-        {
-            if (active) { return; }
-            active = true;
-            Mod.playMusic(Mod.aud_hurryup);
+		public void Begin()
+		{
+			if (active) { return; }
+			active = true;
 
-            Mod.hurryupGui.popPizzaTime();
+			ec.audMan.PlaySingle(Mod.aud_hurryup);
 
-            IEnumerator co = Timer(70f);
-            StartCoroutine(co);
-        }
+			Mod.hurryupGui.popPizzaTime();
 
-        public void Stop()
-        {
-            if (!active) { return; }
-            active = false;
-            Singleton<MusicManager>.Instance.StopFile();
-            StopAllCoroutines();
-        }
+			IEnumerator co = Timer(70f);
+			StartCoroutine(co);
+		}
 
-        public void Lap2()
-        {
-            if ((!active) && (!lap2active)) { return; }
-            active = true;
-            lap2active = true;
-            Stop();
+		public void Stop()
+		{
+			if (!active) { return; }
+			active = false;
+			Singleton<MusicManager>.Instance.StopFile();
+			StopAllCoroutines();
+		}
 
-            Singleton<BaseGameManager>.Instance.AngerBaldi(-1f); // slower baldi
-            Singleton<BaseGameManager>.Instance.AddNotebookTotal(ec.notebookTotal);
+		public void Lap2()
+		{
+			if ((!active) && (!lap2active)) { return; }
+			active = true;
+			lap2active = true;
+			Stop();
 
-            float elevators = ec.elevators.Count;
-            float notebooks = ec.notebookTotal;
+			Singleton<BaseGameManager>.Instance.AngerBaldi(-1f); // slower baldi
+			Singleton<BaseGameManager>.Instance.AddNotebookTotal(ec.notebookTotal);
 
-            IEnumerator co = Timer(elevators * 20f + notebooks + 20f);
-            StartCoroutine(co);
-        }
+			float elevators = ec.elevators.Count;
+			float notebooks = ec.notebookTotal;
 
-        public void Expired()
-        {
-            Stop();
-            Singleton<BaseGameManager>.Instance.AngerBaldi(30f);
+			IEnumerator co = Timer(elevators * 20f + notebooks + 20f);
+			StartCoroutine(co);
+		}
 
-            Baldi baldi = this.ec.GetBaldi();
-            ec.audMan.PlaySingle(ec.audBell);
-        }
+		public void Expired()
+		{
+			Stop();
+			Singleton<BaseGameManager>.Instance.AngerBaldi(30f);
 
-        private IEnumerator Timer(float time)
-        {
-            yield return null;
-            remainingTime = time;
-            while (remainingTime > 0f)
-            {
-                remainingTime -= Time.deltaTime * ec.EnvironmentTimeScale;
-                Singleton<CoreGameManager>.Instance.GetHud(0).UpdateText(0, string.Concat(new string[]
-                {
-                    "ESCAPE! ", Mathf.RoundToInt(remainingTime).ToString(), "s"
-                }));
-                yield return null;
-            }
-            Expired();
-            yield break;
-        }
+			Baldi baldi = this.ec.GetBaldi();
+			ec.audMan.PlaySingle(ec.audBell);
+		}
 
-        private IEnumerator Timer2(float time)
-        {
-            yield return null;
-            remainingTime = time;
-            while (remainingTime > 0f)
-            {
-                remainingTime -= Time.deltaTime * ec.EnvironmentTimeScale;
+		private IEnumerator Timer(float time)
+		{
+			yield return null;
+			remainingTime = time;
+			while (remainingTime > 0f)
+			{
+				remainingTime -= Time.deltaTime * ec.EnvironmentTimeScale;
+				Singleton<CoreGameManager>.Instance.GetHud(0).UpdateText(0, string.Concat(new string[]
+				{
+										"ESCAPE! ", Mathf.RoundToInt(remainingTime).ToString(), "s"
+				}));
+				yield return null;
+			}
+			Expired();
+			yield break;
+		}
 
-                Singleton<CoreGameManager>.Instance.GetHud(0).UpdateText(0, string.Concat(new string[]
-                {
-                     Singleton<BaseGameManager>.Instance.foundNotebooks.ToString(),
-                    "/",
-                    Mathf.Max(ec.notebookTotal, Singleton<BaseGameManager>.Instance.foundNotebooks).ToString(),
-                    " (", 
-                    Mathf.RoundToInt(remainingTime).ToString(),
-                    "s)"
-                }));
-                yield return null;
-            }
-            Expired();
-            yield break;
-        }
+		private IEnumerator Timer2(float time)
+		{
+			yield return null;
+			remainingTime = time;
+			while (remainingTime > 0f)
+			{
+				remainingTime -= Time.deltaTime * ec.EnvironmentTimeScale;
+
+				Singleton<CoreGameManager>.Instance.GetHud(0).UpdateText(0, string.Concat(new string[]
+				{
+										 Singleton<BaseGameManager>.Instance.foundNotebooks.ToString(),
+										"/",
+										Mathf.Max(ec.notebookTotal, Singleton<BaseGameManager>.Instance.foundNotebooks).ToString(),
+										" (",
+										Mathf.RoundToInt(remainingTime).ToString(),
+										"s)"
+				}));
+				yield return null;
+			}
+			Expired();
+			yield break;
+		}
 
 
-    }
+	}
 
-    [HarmonyPatch(typeof(MainGameManager), nameof(MainGameManager.AllNotebooks))]
-    class HurryUpStartPatch
-    {
-        static bool Prefix(MainGameManager __instance)
-        {
-            Mod.hurryupManager.Initialize(__instance.ec);
-            Mod.hurryupManager.Begin();
-            return true;
-        }
-    }
+	[HarmonyPatch(typeof(MainGameManager), nameof(MainGameManager.AllNotebooks))]
+	class HurryUpStartPatch
+	{
+		static bool Prefix(MainGameManager __instance)
+		{
+			Mod.hurryupManager.Initialize(__instance.ec);
+			Mod.hurryupManager.Begin();
+			return true;
+		}
+	}
 
-    [HarmonyPatch(typeof(BaseGameManager), nameof(BaseGameManager.PrepareToLoad))]
-    class HurryUpCleanupPatch
-    {
+	[HarmonyPatch(typeof(BaseGameManager), nameof(BaseGameManager.PrepareToLoad))]
+	class HurryUpCleanupPatch
+	{
 
-        static bool Prefix()
-        {
-            Mod.hurryupManager.Stop();
-            return true;
-        }
-    }
+		static bool Prefix()
+		{
+			Mod.hurryupManager.Stop();
+			return true;
+		}
+	}
 }
